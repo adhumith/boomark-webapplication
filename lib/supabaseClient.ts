@@ -1,6 +1,13 @@
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from '@supabase/supabase-js'
 
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+// If variables are missing, we throw a clear error or return null
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Supabase credentials are missing! Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your .env.local file."
+  )
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
