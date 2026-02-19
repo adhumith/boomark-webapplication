@@ -31,12 +31,12 @@ export default function Home() {
     setMounted(true)
   }, [])
 
-  // 1. Auth Logic
+  // 1. Auth Logic - Handles sessions and cleans up OAuth URLs
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data } = await supabase.auth.getUser()
-        setUser(data.user)
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
       } catch (error) {
         console.error("Auth error:", error)
       } finally {
@@ -46,9 +46,14 @@ export default function Home() {
 
     checkUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setIsAuthLoading(false)
+      
+      // Clean up the URL fragment (#access_token=...) after successful login
+      if (event === "SIGNED_IN") {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     })
 
     return () => listener.subscription.unsubscribe()
@@ -68,6 +73,7 @@ export default function Home() {
       }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setBookmarks((prev) => {
+            // Prevent duplication if the item was already added optimistically
             const exists = prev.some(b => b.id === payload.new.id)
             if (exists) return prev
             return [payload.new, ...prev]
@@ -110,6 +116,7 @@ export default function Home() {
 
       if (error) throw error
       
+      // Local optimistic update
       if (data) {
         setBookmarks((prev) => {
           const exists = prev.some(b => b.id === data[0].id)
@@ -176,7 +183,7 @@ export default function Home() {
                     redirectTo: `${window.location.origin}/auth/callback`
                 }
             })}
-            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-medium"
+            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-indigo-600/20"
           >
             Sign in with Google
           </button>
@@ -195,13 +202,13 @@ export default function Home() {
       
       {/* -------- CUSTOM FRONTEND MODAL -------- */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-red-500/10 p-2 rounded-lg text-red-500">
                 <AlertTriangle size={24} />
               </div>
-              <button onClick={() => setConfirmDeleteId(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => setConfirmDeleteId(null)} className="text-muted-foreground hover:text-foreground">
                 <X size={20} />
               </button>
             </div>
@@ -224,8 +231,8 @@ export default function Home() {
       {/* -------- SIDEBAR -------- */}
       <aside className="w-72 border-r border-border p-8 hidden md:flex flex-col bg-card/50">
         <div className="flex items-center gap-3 mb-12">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <BookmarkIcon className="text-white w-6 h-6" />
+          <div className="bg-indigo-600 p-2 rounded-lg text-white">
+            <BookmarkIcon size={24} />
           </div>
           <span className="text-xl font-bold tracking-tight">SmartBook</span>
         </div>
@@ -253,7 +260,7 @@ export default function Home() {
         <header className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Logged in as {user.email}</p>
+            <p className="text-muted-foreground truncate max-w-[300px]">Logged in as {user.email}</p>
           </div>
           <button 
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
@@ -282,7 +289,7 @@ export default function Home() {
           <button
             onClick={handleAdd}
             disabled={isAdding}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-medium min-w-[120px] disabled:opacity-70 shadow-lg shadow-indigo-600/20"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-medium min-w-[120px] disabled:opacity-70"
           >
             {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus size={18} />}
             {isAdding ? "Adding..." : "Add"}
@@ -363,7 +370,7 @@ function BookmarkCard({ bookmark, onDelete, onCopy, copied, isDeleting }: any) {
   return (
     <div className={`group bg-card p-4 rounded-2xl border border-border flex items-center justify-between hover:border-indigo-500/50 hover:shadow-md transition-all ${isDeleting ? "opacity-50 grayscale" : ""}`}>
       <div className="flex items-center gap-4 min-w-0">
-        <div className="w-12 h-12 rounded-xl bg-accent flex-shrink-0 flex items-center justify-center p-2 overflow-hidden border border-border/50">
+        <div className="w-12 h-12 rounded-xl bg-accent flex-shrink-0 flex items-center justify-center p-2 overflow-hidden border border-border/50 text-indigo-600">
           <img src={favicon} alt="" className="w-full h-full object-contain" />
         </div>
         <div className="min-w-0">
