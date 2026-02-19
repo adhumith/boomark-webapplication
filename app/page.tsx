@@ -170,7 +170,12 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-2">Welcome to SmartBook</h1>
           <p className="text-muted-foreground mb-6">Your personal knowledge vault.</p>
           <button
-            onClick={() => supabase.auth.signInWithOAuth({ provider: "google" })}
+            onClick={() => supabase.auth.signInWithOAuth({ 
+                provider: "google",
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`
+                }
+            })}
             className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-medium"
           >
             Sign in with Google
@@ -190,26 +195,26 @@ export default function Home() {
       
       {/* -------- CUSTOM FRONTEND MODAL -------- */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-2xl scale-in-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-red-500/10 p-2 rounded-lg text-red-500">
                 <AlertTriangle size={24} />
               </div>
-              <button onClick={() => setConfirmDeleteId(null)} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setConfirmDeleteId(null)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X size={20} />
               </button>
             </div>
             <h2 className="text-xl font-bold mb-2 text-foreground">Delete Bookmark?</h2>
             <p className="text-muted-foreground mb-6 text-sm">
-              Are you sure? This bookmark will be permanently removed from your vault.
+              Are you sure? This bookmark will be permanently removed from your vault. This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 rounded-xl text-sm font-medium hover:bg-accent">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
                 Cancel
               </button>
-              <button onClick={executeDelete} className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all">
-                Delete
+              <button onClick={executeDelete} className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-red-600/20">
+                Delete Now
               </button>
             </div>
           </div>
@@ -277,7 +282,7 @@ export default function Home() {
           <button
             onClick={handleAdd}
             disabled={isAdding}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-medium min-w-[120px] disabled:opacity-70"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-medium min-w-[120px] disabled:opacity-70 shadow-lg shadow-indigo-600/20"
           >
             {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus size={18} />}
             {isAdding ? "Adding..." : "Add"}
@@ -365,7 +370,7 @@ function BookmarkCard({ bookmark, onDelete, onCopy, copied, isDeleting }: any) {
           <h3 className="font-semibold truncate text-foreground mb-0.5">{bookmark.title}</h3>
           
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="truncate max-w-[150px] font-medium">{domain}</span>
+            <span className="truncate max-w-[150px] font-medium text-indigo-600 dark:text-indigo-400">{domain}</span>
             <span className="flex items-center gap-1 shrink-0">
               <Calendar className="w-3 h-3" />
               {formattedDate}
